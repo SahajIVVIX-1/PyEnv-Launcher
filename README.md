@@ -1,97 +1,193 @@
-# UniShare: Seamless Cross-Platform File Transfer
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python" alt="Python Version">
+  <img src="https://img.shields.io/badge/PyQt6-v6.x-green?style=for-the-badge&logo=qt" alt="PyQt6 Version">
+  <img src="https://img.shields.io/badge/pyenv-managed-orange?style=for-the-badge&logo=conda-forge" alt="PyEnv Managed">
+  <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge" alt="License">
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Platform Support](https://img.shields.io/badge/Platforms-Windows%7CMacOS%7CLinux%7CAndroid%7CiOS-blue.svg?style=flat-square)](https://github.com/SahajIVVIX-1/UniShare)
+<h1 align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg" width="40" height="40" alt="PyEnv Manager Icon">
+  PyEnv Manager
+</h1>
 
-UniShare is an open-source, cross-platform application designed for fast, secure, and seamless file sharing between devices on a local network. Inspired by applications like LocalSend, UniShare aims to provide a user-friendly experience for transferring files, text, and other data without requiring an internet connection or external servers. It's built with Flutter and Dart, ensuring compatibility across a wide range of operating systems including Windows, macOS, Linux, Android, and iOS.
+<p align="center">
+  A sleek, modern, and powerful PyQt6 GUI for effortless PyEnv environment management.
+  Launch scripts, Jupyter notebooks, or interactive shells with ease, all from one intuitive interface.
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#development">Development</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#license">License</a>
+</p>
 
 ---
 
-## ✨ Key Features
+## ✨ Features
 
-*   **Cross-Platform Compatibility:** Works natively on Windows, macOS, Linux, Android, and iOS.
-*   **Local Network Transfer:** No internet connection or external servers needed. All transfers happen directly on your local network.
-*   **Fast & Efficient:** Optimized for quick file transfers, handling large files with ease.
-*   **Secure:** Implements end-to-end encryption (e.g., HTTPS) for all data transfers, ensuring your data is private.
-*   **Device Discovery:** Automatically discovers nearby devices running UniShare using mDNS (Multicast DNS).
-*   **File & Folder Sharing:** Send any type of file or entire folders with a simple drag-and-drop or selection.
-*   **Text Sharing:** Easily share text snippets directly to the clipboard on the receiving device.
-*   **Customizable Device Names:** Personalize your device's name for easy identification among other devices.
-*   **Intuitive User Interface:** A clean, modern, and user-friendly interface designed for ease of use.
-*   **(Optional) Transfer History:** Keep track of your past file transfers.
-*   **(Optional) QR Code Sharing:** Generate QR codes for easy manual connection.
+PyEnv Manager is designed to simplify your Python development workflow, offering a comprehensive set of tools wrapped in a user-friendly GUI.
+
+-   **🚀 Environment Management:**
+    -   List all installed PyEnv environments with their versions, status (active/inactive), and installation paths.
+    -   Create new Python environments for specific versions.
+    -   Delete existing environments cleanly.
+    -   Auto-detects `PYENV_ROOT` for seamless integration.
+
+-   **📦 Package Management:**
+    -   View all installed packages within a selected PyEnv environment.
+    -   Install new packages directly into the active environment.
+    -   Uninstall packages with a single click.
+    -   Refresh package lists to see the latest changes.
+
+-   **▶️ Flexible Launch Modes:**
+    -   **Interactive Shell:** Launch an activated shell for the selected Python environment.
+    -   **Run Python Script:** Execute any `.py` script with arguments in the chosen environment.
+    -   **Jupyter Notebook:** Instantly start a Jupyter Notebook server for data science and interactive computing.
+
+-   **⚙️ Advanced Options:**
+    -   Specify a custom **Working Directory** for your launched processes.
+    -   Pass **Command-line Arguments** to scripts or Jupyter.
+    -   Real-time **Command Logging** to track all operations and outputs.
+
+-   **🎨 Dynamic Theming:**
+    -   Toggle between beautiful **Dark** and **Light** themes to suit your preference.
+    -   Modern, responsive UI with crisp icons.
+
+-   **👁️ User Experience:**
+    -   Intuitive drag-and-drop resizing of panels.
+    -   Progress indicators for long-running operations.
+    -   Clear and concise error/success messages.
+    -   Smooth fade-in animation on application launch.
 
 ---
 
-## 🚀 Getting Started
-
-To get UniShare up and running on your local machine:
+## 🛠️ Installation
 
 ### Prerequisites
 
-*   **Flutter SDK:** Ensure you have the Flutter SDK installed. If not, follow the official installation guide: [https://docs.flutter.dev/get-started/install](https://docs.flutter.dev/get-started/install)
-*   **Git:** You'll need Git for cloning the repository. Download it from [https://git-scm.com/downloads](https://git-scm.com/downloads).
-*   **(Optional) Desktop Build Tools:** For building desktop applications, ensure you have the necessary build tools for your operating system (e.g., Visual Studio with C++ workload for Windows, Xcode for macOS).
+Before you begin, ensure you have the following installed:
 
-### Installation
+1.  **Python 3.8+**: Download from [python.org](https://www.python.org/downloads/).
+2.  **PyEnv**: Follow the official installation guide on [pyenv's GitHub](https://github.com/pyenv/pyenv#installation).
+    -   Make sure `pyenv init` is properly configured in your shell's startup files (`.bashrc`, `.zshrc`, etc.).
+3.  **Git**: For cloning this repository.
 
-1.  **Clone the repository:**
+### Steps
+
+1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/SahajIVVIX-1/UniShare.git
-    cd UniShare
-    ```
-    *(Note: I've used your provided repository link here. If you change the repository name or your username, update this command accordingly.)*
-
-2.  **Install Flutter dependencies:**
-    Open your terminal in the `UniShare` directory and run:
-    ```bash
-    flutter pub get
+    git clone https://github.com/your-username/pyenv-manager.git
+    cd pyenv-manager
     ```
 
-3.  **Run the application:**
-    Connect a physical device or start an emulator/simulator, then run:
+2.  **Create a Virtual Environment (Recommended):**
     ```bash
-    flutter run
+    python -m venv venv
+    # On Windows
+    .\venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
     ```
+
+3.  **Install Dependencies:**
+    ```bash
+    pip install PyQt6 qtawesome
+    ```
+    (These are the core dependencies for the GUI and icons.)
+
+4.  **Run the Application:**
+    ```bash
+    python main.py
+    ```
+
+---
+
+## 🚀 Usage
+
+1.  **Set PyEnv Root (if not auto-detected):**
+    -   The application attempts to auto-detect your `PYENV_ROOT` (typically `~/.pyenv`).
+    -   If the path shown is incorrect, you can manually update it in the "PyEnv Root" section on the left panel, or navigate to `File > Settings` from the menu bar to adjust it.
+
+2.  **Manage Environments (Environments Tab):**
+    -   Upon launching, the "Environments" tab will display a list of your installed Python versions. If it's empty or outdated, click the "Refresh" button.
+    -   To interact with an environment (e.g., manage its packages or launch processes), select it from the table.
+    -   To install a new Python version, click "Create" and enter the desired version (e.g., `3.10.0`).
+    -   To remove an existing environment, select it and click "Delete". A confirmation dialog will appear.
+
+3.  **Manage Packages (Packages Tab):**
+    -   First, ensure you have an environment selected in the "Environments" tab.
+    -   Switch to the "Packages" tab and click "Refresh Packages" to view all `pip`-installed packages for the currently selected environment.
+    -   To install a new package, click "Install" and enter the package name (e.g., `numpy`, `requests`).
+    -   To uninstall a package, select it from the table and click "Uninstall". A confirmation will be requested.
+
+4.  **Launch Operations:**
+    -   **Select Launch Mode:** Use the "Launch Mode" dropdown to choose your desired operation:
+        -   **Shell:** Opens a new command-line interface with the selected PyEnv environment activated.
+        -   **Run Script:** Executes a specified Python script (`.py` file) using the chosen environment.
+        -   **Jupyter Notebook:** Starts a Jupyter Notebook server, accessible in your web browser, tied to the selected environment.
+    -   **Working Directory:** It's good practice to set a working directory, especially for scripts or Jupyter notebooks. Use the "Browse" button to select one.
+    -   **Script Path (for Run Script mode):** If "Run Script" mode is chosen, a new input field appears. Use its "Browse" button to locate and select your Python script.
+    -   **Arguments:** Enter any command-line arguments needed for your script or Jupyter launch (e.g., `--port 8889` for Jupyter, or arguments for your Python script).
+    -   Click the "Launch" button to initiate the selected process.
+    -   If a process is running, the "Stop" button will become active, allowing you to terminate it. A progress bar will also indicate ongoing activity.
+
+5.  **Monitor Activity (Log Tab):**
+    -   The "Log" tab provides a detailed output of all commands executed by the application, including their standard output and any errors. This is invaluable for debugging and understanding what the application is doing behind the scenes.
+
+6.  **Settings:**
+    -   Click the gear icon (⚙️) in the top-right header or go to `Edit > Settings` in the menu bar.
+    -   Here you can switch between the application's "Dark" and "Light" themes.
+    -   You can also manually override the "PyEnv Root Path" if the auto-detection is not suitable for your setup.
+
+---
+
+## 🧑‍💻 Development
+
+### Project Structure
+
+The entire application is self-contained within `main.py` for simplicity.
+
+-   **`main.py`**: Contains all classes and logic for the `PyEnvManager` application, including UI management (`UIManager`), dialogs (`AboutDialog`, `SettingsDialog`), and core PyEnv interaction logic.
+-   **`AppConfig`**: A static class for managing global application constants like fonts and theme definitions.
+
+### Key Technologies Used
+
+-   **PyQt6**: The robust framework used for constructing the entire graphical user interface.
+-   **qtawesome**: Provides a vast library of scalable vector icons (Font Awesome, Material Design) for a professional look and feel.
+-   **`subprocess` module**: Employed for direct command-line interaction with `pyenv`, `python`, and `pip` utilities.
+-   **`QProcess`**: Utilized for asynchronous execution of external commands, allowing the UI to remain responsive while operations run in the background, and for capturing their real-time output.
+
+### How to Run in Development Mode
+
+To run the application directly from the source code:
+
+1.  Ensure you have followed the "Installation" steps and activated your virtual environment.
+2.  Execute the main script:
+    ```bash
+    python main.py
+    ```
+    Note that for changes to the Python code to take effect, the application must be restarted.
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions to UniShare! If you'd like to contribute, please follow these steps:
+We welcome contributions to make PyEnv Manager even better! If you have suggestions, encounter bugs, or wish to implement new features, please consider the following:
 
-1.  **Fork the repository:** Click the "Fork" button on the top right of the GitHub page.
-2.  **Clone your fork:**
-    ```bash
-    git clone https://github.com/SahajIVVIX-1/UniShare.git
-    cd UniShare
-    ```
-    *(Replace `YOUR_GITHUB_USERNAME` with your actual GitHub username.)*
-3.  **Create a new branch:**
-    ```bash
-    git checkout -b feature/YourFeatureName
-    ```
-    *(Replace `YourFeatureName` with a descriptive name for your contribution.)*
-4.  **Make your changes:** Add new features, fix bugs, or improve documentation.
-5.  **Commit your changes:**
-    ```bash
-    git add .
-    git commit -m "feat: Add YourFeatureName"
-    ```
-    *(Use conventional commit messages for clarity.)*
-6.  **Push to your branch:**
-    ```bash
-    git push origin feature/YourFeatureName
-    ```
-7.  **Open a Pull Request:** Go to the original repository (`https://github.com/SahajIVVIX-1/UniShare`) and open a Pull Request from your branch.
-
-Please ensure your code adheres to the project's coding standards and includes tests where appropriate.
+1.  **Fork** the repository to your GitHub account.
+2.  **Create a new branch** for your feature or bugfix (e.g., `git checkout -b feature/add-new-mode` or `bugfix/resolve-package-issue`).
+3.  **Implement your changes**, ensuring they align with the existing code style.
+4.  **Commit your changes** with a clear and descriptive message (e.g., `git commit -m 'feat: Implemented new XYZ launch mode'`).
+5.  **Push your branch** to your forked repository.
+6.  **Open a Pull Request** to the original repository's `main` branch, detailing your changes.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-*(Note: You will need to create a `LICENSE.md` file in your repository with the MIT license text or choose another license.)*
+This project is open-source and distributed under the **MIT License**. For full details, please refer to the [LICENSE](LICENSE) file in the repository.
 
 ---
