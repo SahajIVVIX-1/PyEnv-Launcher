@@ -580,6 +580,673 @@ class UIManager:
         footer.addWidget(QSizeGrip(self.main_window.container)); return footer
 
 
+# --- Main Application Window ---
+class JupyterLauncher(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.settings = QSettings("ChakhdiLocal", "PyEnvLauncher")
+        self.current_theme = AppConfig.DARK_THEME if self.settings.value("theme", "Dark") == "Dark" else AppConfig.LIGHT_THEME
+        self.setWindowTitle("PyEnv Launcher"); self.setObjectName("JupyterLauncher")
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint); self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        # We need a WIDER window for a two-column layout. Height can be reduced.
+        self.resize(1100, 850)
+
+        self.observer = None
+        self.old_pos = None
+        self.command_thread = None
+        self.interactive_widgets = []
+        self.package_data = {}
+
+        self.ui = UIManager(self)
+        self._apply_stylesheet()
+        self._connect_signals()
+        self._setup_animations()
+        self._load_app_settings()
+        self._on_path_changed()
+
+    def _connect_signals(self):
+        # Title Bar
+        self.ui.about_btn.clicked.connect(self._open_about_dialog)
+        self.ui.settings_btn.clicked.connect(self._open_settings)
+        self.ui.close_btn.clicked.connect(self._initiate_close)
+        self.ui.minimize_btn.clicked.connect(self.showMinimized)
+        # Path Section
+        self.ui.path_input.textChanged.connect(self._on_path_changed)
+        self.ui.recent_paths_btn.clicked.connect(self._show_recent_paths_menu)
+        self.ui.browse_btn.clicked.connect(self._browse_path)
+        self.ui.new_project_btn.clicked.connect(self._create_new_project)
+        self.ui.open_btn.clicked.connect(self._open_in_explorer)
+        # Git Section
+        self.ui.git_pull_btn.clicked.connect(self._git_pull)
+        self.ui.git_commit_btn.clicked.connect(self._git_commit_stage_1_check_status)
+        # New Venv Section
+        self.ui.create_venv_btn.clicked.connect(self._create_environment)
+        # Manage Venv Section
+        self.ui.venv_dropdown.currentTextChanged.connect(self._on_venv_selection_changed)
+        self.ui.delete_venv_btn.clicked.connect(self._delete_environment)
+        self.ui.install_reqs_btn.clicked.connect(self._install_requirements)
+        self.ui.freeze_btn.clicked.connect(self._freeze_requirements)
+        self.ui.export_json_btn.clicked.connect(self._export_to_json)
+        self.ui.activate_btn.clicked.connect(self._activate_environment)
+        self.ui.launch_jupyter_btn.clicked.connect(self._launch_jupyter)
+        # Build Tools Section
+        self.ui.poetry_install_btn.clicked.connect(self._poetry_install)
+        self.ui.pdm_sync_btn.clicked.connect(self._pdm_sync)
+        # File List & Log
+        self.ui.file_list.customContextMenuRequested.connect(self._show_file_context_menu)
+        self.ui.clear_log_btn.clicked.connect(self.ui.log_output.clear)
+        self.ui.check_updates_btn.clicked.connect(self._check_for_package_updates)
+        self.ui.upgrade_package_btn.clicked.connect(self._upgrade_package)
+        self.ui.uninstall_package_btn.clicked.connect(self._uninstall_package)
+
+    def _apply_stylesheet(self):
+        c = self.current_theme
+        self.setStyleSheet(f"""
+            #JupyterLauncher{{background:transparent;}}
+            #container{{background-color:{c['primary']};border:2px solid {c['border_window']};border-radius:15px;}}
+            QWidget{{font-family:"{AppConfig.FONT_MAIN}";color:{c['text']};font-size:9pt;}}
+            #titleBar{{background-color:{c['background']};border-top-left-radius:13px;border-top-right-radius:13px;}}
+            #titleLabel{{color:{c['text_header']};font-weight:bold;font-size:11pt;padding-left:5px;}}
+            #controlBtn,#recentBtn,#deleteBtn{{background:transparent;border:none;font-size:12pt;font-weight:bold;}}
+            #controlBtn:hover,#recentBtn:hover,#deleteBtn:hover{{background:{c['border']};border-radius:4px;}}
+            QScrollArea,QScrollArea>QWidget>QWidget{{background:transparent;border:none;}}
+            QLabel{{font-weight:bold;background:transparent;}}
+            #detailsLabel{{font-weight:normal;color:{c['text_secondary']};}}
+            QLineEdit,QComboBox,QTextEdit{{background-color:{c['background']};border:1px solid {c['border']};border-radius:6px;padding:7px;}}
+            QLineEdit:focus,QComboBox:focus,QTextEdit:focus{{border-color:{c['accent']};}}
+            QComboBox QAbstractItemView{{background-color:{c['background']};border:1px solid {c['border']};selection-background-color:{c['accent']};color:{c['text']};outline:0px;}}
+            QComboBox QAbstractItemView::item{{padding:10px 6px;}}
+            QPushButton{{background-color:{c['border']};border:1px solid {c['border']};border-radius:6px;padding:8px;font-weight:bold;}}
+            QPushButton:hover{{border-color:#8b949e;}}
+            QPushButton:pressed{{background-color:#21262d;}}
+            QPushButton:disabled{{background-color:{c['border']};color:{c['text_secondary']};border-color:{c['border']};}}
+            #createBtn{{background-color:{c['error']};border-color:{c['error']};}} #createBtn:hover{{background-color:#b82c2a;}}
+            #statusLabel{{font-weight:normal;background-color:transparent;}}
+            #runningIndicator{{color:{c['success']};font-size:16pt;font-weight:bold;padding-bottom:4px;}}
+            QProgressBar{{border-radius:3px;background-color:{c['border']};text-align:center;}}
+            QProgressBar::chunk{{background-color:{c['accent']};border-radius:3px;}}
+            QListWidget,#logOutput{{background-color:{c['background']};border:1px solid {c['border']};border-radius:6px;padding:4px;}}
+            QListWidget::item{{padding:6px;border-radius:4px;}} QListWidget::item:hover{{background-color:{c['border']};}}
+            QListWidget::item:selected{{background-color:{c['accent']};color:white;}}
+            QMenu{{background-color:{c['primary']};border:1px solid {c['border']};}} QMenu::item:selected{{background-color:{c['accent']};}}
+            QGroupBox{{font-weight:bold;border:1px solid {c['border']};border-radius:6px;margin-top:10px;}}
+            QGroupBox::title{{subcontrol-origin:margin;subcontrol-position:top left;padding:0 5px;left:10px;}}
+            QTableWidget {{
+                background-color: {c['background']};
+                border: 1px solid {c['border']};
+                border-radius: 6px;
+                gridline-color: {c['border']};
+                alternate-background-color: {c['background']};
+            }}
+            QTableWidget::item {{
+                padding: 6px;
+                color: {c['text']};
+            }}
+            QTableWidget::item:selected {{
+                background-color: {c['accent']};
+                color: #ffffff;
+            }}
+            QHeaderView::section {{
+                background-color: {c['background']};
+                border-bottom: 2px solid {c['border']};
+                padding: 6px;
+                font-weight: bold;
+            }}
+            
+            /* === STYLE THE MAIN SCROLLBARS === */
+            QScrollBar:vertical {{
+                border: none;
+                background: {c['primary']};
+                width: 10px;
+                margin: 0px 0px 0px 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {c['border']};
+                min-height: 25px;
+                border-radius: 5px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: {c['accent']};
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+                border: none;
+                background: none;
+            }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: none;
+            }}
+            QScrollBar:horizontal {{
+                border: none;
+                background: {c['primary']};
+                height: 10px;
+                margin: 0px 0px 0px 0px;
+            }}
+            QScrollBar::handle:horizontal {{
+                background: {c['border']};
+                min-width: 25px;
+                border-radius: 5px;
+            }}
+            QScrollBar::handle:horizontal:hover {{
+                background: {c['accent']};
+            }}
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+                width: 0px;
+                border: none;
+                background: none;
+            }}
+            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+                background: none;
+            }}
+        """)
+        
+    def _set_ui_enabled(self, enabled):
+        for widget in self.interactive_widgets:
+            if widget != self.ui.clear_log_btn:
+                widget.setEnabled(enabled)
+
+    def _run_command(self, command_type, on_finish=None, **kwargs):
+        global LAST_ACTION
+        LAST_ACTION = f"Running command '{command_type}' with args {kwargs}"
+        if self.command_thread and self.command_thread.isRunning():
+            self._update_status("A command is already running. Please wait.", "error")
+            return
+        base_path = self.ui.path_input.text().strip()
+        if not Path(base_path).is_dir() and command_type not in ['list_conda_envs']:
+            self._update_status("Invalid project directory specified.", "error")
+            return
+        env_text = self.ui.venv_dropdown.currentText()
+        env_data = self.ui.venv_dropdown.currentData()
+        env_name = env_text.split(' (')[0] if env_text else None
+        env_type = env_data or "venv"
+        
+        required_env_commands = ["get_env_details", "freeze", "pip_list", "launch", "activate", "install_requirements"]
+        if command_type in required_env_commands and (not env_name or "found" in env_name):
+            self._update_status("A valid environment must be selected for this action.", "error")
+            return
+            
+        self._set_ui_enabled(False)
+        self.command_thread = CommandThread(base_path, env_name, env_type, command_type, **kwargs)
+        self.command_thread.output_received.connect(self._log_message)
+        self.command_thread.process_started.connect(lambda: self._set_progress_bar_active(True))
+        self.command_thread.finished.connect(lambda s, m, o: self._on_command_finished(s, m, o, on_finish))
+        self.command_thread.start()
+        self._log_message(f"Starting: {command_type}...")
+
+    def _on_command_finished(self, success, message, command_output, on_finish_callback):
+        self._set_progress_bar_active(False)
+        self._set_ui_enabled(True)
+        self._update_status(message, "success" if success else "error")
+        self._log_message(f"Finished: {message}")
+        if success and on_finish_callback:
+            on_finish_callback(command_output)
+        if self.command_thread and self.command_thread.command_type in ['git_pull', 'git_commit']:
+            self._update_git_status()
+
+    def _open_about_dialog(self): AboutDialog(self).exec()
+    def _open_settings(self):
+        dialog = SettingsDialog(self)
+        if dialog.exec():
+            self.settings.sync()
+            self.current_theme = AppConfig.DARK_THEME if self.settings.value("theme", "Dark") == "Dark" else AppConfig.LIGHT_THEME
+            self._apply_stylesheet()
+            self._update_status("Settings saved and theme updated.", "info")
+
+    def _load_app_settings(self):
+        self.current_theme = AppConfig.DARK_THEME if self.settings.value("theme", "Dark") == "Dark" else AppConfig.LIGHT_THEME
+        default_path = self.settings.value("default_path", os.path.expanduser("~"))
+        self.ui.path_input.setText(default_path)
+        self._add_to_recent_paths(default_path)
+
+    def _on_path_changed(self):
+        if not hasattr(self, '_path_change_timer'):
+            self._path_change_timer = QTimer()
+            self._path_change_timer.setSingleShot(True)
+            self._path_change_timer.timeout.connect(self.discover_resources)
+        self._path_change_timer.start(500)
+
+    def discover_resources(self):
+        """High-level method to discover all resources for the current path."""
+        path = Path(self.ui.path_input.text().strip())
+        if path.is_dir():
+            self._populate_file_list(path)
+            self._update_file_observer(path)
+            self._add_to_recent_paths(str(path))
+            self._update_git_status()
+            self._update_build_tool_visibility()
+            self._find_and_populate_venvs(path)
+        else:
+            self.ui.git_groupbox.setVisible(False)
+            self.ui.build_tools_groupbox.setVisible(False)
+            self.ui.file_list.clear()
+
+    def _add_to_recent_paths(self, path):
+        if not path or not os.path.isdir(path): return
+        recent = self.settings.value("recent_paths", [], type=list)
+        if path in recent: recent.remove(path)
+        recent.insert(0, path)
+        self.settings.setValue("recent_paths", recent[:10])
+
+    def _clear_recent_paths(self):
+        reply = QMessageBox.question(self, 'Confirm Clear History',
+                                     "Are you sure you want to clear all recent project history?",
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+                                     QMessageBox.StandardButton.Cancel)
+        if reply == QMessageBox.StandardButton.Yes:
+            self.settings.remove("recent_paths")
+            self._update_status("Recent project history cleared.", "success")
+            self._log_message("Recent project history cleared by user.")
+
+    def _show_recent_paths_menu(self):
+        recent = self.settings.value("recent_paths", [], type=list)
+        menu = QMenu(self)
+
+        # --- FIX #1: Control Icon Size ---
+        # Get the standard directory icon from the style.
+        icon_pixmap = self.style().standardPixmap(QStyle.StandardPixmap.SP_DirIcon)
+        # Create a new QIcon from that pixmap, but specifically scaled to a smaller size.
+        # 16x16 is a standard, safe size for menu items.
+        small_icon = QIcon(icon_pixmap.scaled(16, 16, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+
+        if recent:
+            for path_str in recent:
+                # --- FIX #2: Normalize the Path Separator ---
+                # Create a Path object and then convert it to a string with forward slashes.
+                # The .as_posix() method guarantees forward slashes, regardless of the OS.
+                display_path = Path(path_str).as_posix()
+
+                # Now, use the corrected values to create the action.
+                action = QAction(small_icon, display_path, self) # Use the new small icon and normalized path
+                action.triggered.connect(lambda checked, p=path_str: self.ui.path_input.setText(p)) # Connect with original path
+                menu.addAction(action)
+            menu.addSeparator()
+        else:
+            # Also add a disabled "empty" state for better UX
+            empty_action = QAction("No recent paths", self)
+            empty_action.setEnabled(False)
+            menu.addAction(empty_action)
+
+        # Use a small trash icon for the clear action as well
+        trash_pixmap = self.style().standardPixmap(QStyle.StandardPixmap.SP_TrashIcon)
+        small_trash_icon = QIcon(trash_pixmap.scaled(16, 16, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+
+        clear_action = QAction(small_trash_icon, "Clear Recent History", self)
+        clear_action.setEnabled(bool(recent))
+        clear_action.triggered.connect(self._clear_recent_paths)
+        menu.addAction(clear_action)
+
+        menu.exec(self.ui.recent_paths_btn.mapToGlobal(QPoint(0, self.ui.recent_paths_btn.height())))
+
+    def _browse_path(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Project Directory", self.ui.path_input.text())
+        if path: self.ui.path_input.setText(path)
+
+    def _open_in_explorer(self):
+        path = self.ui.path_input.text().strip()
+        if os.path.isdir(path):
+            os.startfile(path)
+        else:
+            self._update_status("Directory not found.", "error")
+
+    def _create_environment(self):
+        name = self.ui.new_venv_name_input.text().strip()
+        if not name or ' ' in name:
+            self._update_status("Invalid environment name. No spaces allowed.", "error"); return
+        if (Path(self.ui.path_input.text().strip()) / name).exists():
+            self._update_status(f"Directory or file '{name}' already exists.", "error"); return
+        self._run_command("create_venv", new_env_name=name, on_finish=lambda _: self.discover_resources())
+        self.ui.new_venv_name_input.clear()
+
+    def _delete_environment(self):
+        env_text = self.ui.venv_dropdown.currentText()
+        if not env_text or "found" in env_text: return
+        env_name = env_text.split(' (')[0]
+        env_path = Path(self.ui.path_input.text().strip()) / env_name
+        
+        reply = QMessageBox.question(self, 'Confirm Deletion', f"Are you sure you want to permanently delete the environment '{env_name}'?\n\nThis action cannot be undone.",
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                shutil.rmtree(env_path)
+                QTimer.singleShot(250, self.discover_resources)
+                self._update_status(f"Environment '{env_name}' deleted successfully.", "success")
+            except Exception as e:
+                self._update_status(f"Error deleting environment: {e}", "error")
+
+    # In the JupyterLauncher class...
+    def _on_venv_selection_changed(self, name):
+        self.ui.package_action_group.setVisible(False)
+        self.ui.package_table.setVisible(False)
+        self.ui.package_table.clearContents()
+        self.package_data = {}  
+        if name and "found" not in name:
+            self.ui.package_action_group.setVisible(True)
+            self.ui.package_table.setVisible(True)
+            # We only start the FIRST command. Its callback will start the next one.
+            self._run_command("get_env_details", on_finish=self._update_env_details)
+        else:
+            self.ui.env_details_label.setText("Select an environment to see details.")
+
+    # In the JupyterLauncher class...
+    def _update_env_details(self, py_ver):
+        name = self.ui.venv_dropdown.currentText().split(' (')[0]
+        path = Path(self.ui.path_input.text().strip()) / name
+        try:
+            self.ui.env_details_label.setText(f"Version: {py_ver.strip()} | Created: {time.ctime(os.path.getctime(path))}")
+        except FileNotFoundError:
+            self.ui.env_details_label.setText("Details unavailable (environment may be remote or deleted).")
+        
+        # NOW, after the first command is done, we start the second one.
+        self._fetch_package_list()
+
+    def _install_requirements(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select Requirements File", self.ui.path_input.text(), "Package Files (*.txt *.json)")
+        if path: self._run_command("install_requirements", requirements_path=path)
+     
+     # Add these new methods anywhere inside the JupyterLauncher class
+
+    def _fetch_package_list(self):
+        """Initiates the command to get all installed packages."""
+        self.ui.package_table.clearContents()
+        self.ui.package_table.setRowCount(0)
+        self._update_status("Fetching installed packages...", "info")
+        self._run_command("pip_list", on_finish=self._populate_package_table)
+
+    def _populate_package_table(self, json_output):
+        """Parses the 'pip list' output and populates the package table."""
+        try:
+            packages = json.loads(json_output)
+            self.package_data = {pkg['name']: pkg for pkg in packages}
+            self.ui.package_table.setRowCount(len(packages))
+            
+            for row, pkg in enumerate(packages):
+                name_item = QTableWidgetItem(pkg['name'])
+                version_item = QTableWidgetItem(pkg['version'])
+                latest_item = QTableWidgetItem("N/A") # Placeholder for outdated check
+                
+                self.ui.package_table.setItem(row, 0, name_item)
+                self.ui.package_table.setItem(row, 1, version_item)
+                self.ui.package_table.setItem(row, 2, latest_item)
+                
+            self.ui.package_table.resizeColumnsToContents()
+            self._update_status(f"Found {len(packages)} packages.", "success")
+        except json.JSONDecodeError:
+            self._update_status("Failed to parse package list.", "error")
+            self._log_message(f"Error decoding JSON from pip list: {json_output}")
+
+    def _check_for_package_updates(self):
+        """Runs the 'pip list --outdated' command."""
+        self._update_status("Checking for outdated packages...", "info")
+        self._run_command("pip_outdated", on_finish=self._highlight_outdated_packages)
+
+    def _highlight_outdated_packages(self, json_output):
+        """Parses the outdated list and updates the table UI."""
+        try:
+            outdated_packages = json.loads(json_output)
+            if not outdated_packages:
+                self._update_status("All packages are up-to-date.", "success")
+                return
+                
+            outdated_map = {pkg['name']: pkg['latest_version'] for pkg in outdated_packages}
+            
+            for row in range(self.ui.package_table.rowCount()):
+                name_item = self.ui.package_table.item(row, 0)
+                if name_item and name_item.text() in outdated_map:
+                    latest_version = outdated_map[name_item.text()]
+                    self.ui.package_table.item(row, 2).setText(latest_version)
+                    # Highlight the entire row for visibility
+                    for col in range(3):
+                        self.ui.package_table.item(row, col).setBackground(self.current_theme['git_dirty'])
+
+            self._update_status(f"Found {len(outdated_packages)} outdated packages.", "info")
+        except json.JSONDecodeError:
+            self._update_status("Failed to parse outdated package list.", "error")
+
+    def _get_selected_package_name(self):
+        """Helper to get the name of the currently selected package in the table."""
+        selected_items = self.ui.package_table.selectedItems()
+        if not selected_items:
+            self._update_status("No package selected.", "error")
+            return None
+        # The first item in the selected row is the package name
+        return self.ui.package_table.item(selected_items[0].row(), 0).text()
+
+    def _upgrade_package(self):
+        """Upgrades the selected package."""
+        package_name = self._get_selected_package_name()
+        if package_name:
+            self._update_status(f"Upgrading {package_name}...", "info")
+            self._run_command("pip_upgrade", 
+                              package_name=package_name,
+                              on_finish=lambda _: self._fetch_package_list()) # Refresh list on success
+
+    def _uninstall_package(self):
+        """Uninstalls the selected package."""
+        package_name = self._get_selected_package_name()
+        if package_name:
+            reply = QMessageBox.question(self, 'Confirm Uninstall', 
+                                         f"Are you sure you want to uninstall '{package_name}'?",
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+                                         QMessageBox.StandardButton.Cancel)
+            if reply == QMessageBox.StandardButton.Yes:
+                self._update_status(f"Uninstalling {package_name}...", "info")
+                self._run_command("pip_uninstall", 
+                                  package_name=package_name,
+                                  on_finish=lambda _: self._fetch_package_list()) # Refresh list on success
+
+    def _freeze_requirements(self): self._run_command("freeze", on_finish=self._save_freeze_output)
+    def _save_freeze_output(self, output):
+        try:
+            (Path(self.ui.path_input.text().strip()) / "requirements.txt").write_text(output.strip())
+            self._update_status("requirements.txt generated successfully.", "success")
+            self.discover_resources()
+        except Exception as e: self._update_status(f"Failed to write requirements.txt: {e}", "error")
+
+    def _export_to_json(self): self._run_command("pip_list", on_finish=self._save_json_output)
+    def _save_json_output(self, output):
+        try:
+            packages = json.loads(output)
+            filtered = sorted([f"{p['name']}=={p['version']}" for p in packages if p['name'] not in ['pip', 'setuptools', 'wheel']], key=str.lower)
+            (Path(self.ui.path_input.text().strip()) / "packages.json").write_text(json.dumps({"packages": filtered}, indent=4))
+            self._update_status("packages.json exported successfully.", "success")
+            self.discover_resources()
+        except Exception as e:
+            self._update_status(f"Failed to export to JSON: {e}", "error")
+            self._log_message(f"JSON export error details: {output}")
+
+    def _git_pull(self): self._run_command("git_pull")
+    def _git_commit_stage_1_check_status(self): self._run_command("git_status", on_finish=self._git_commit_stage_2_show_dialog)
+    def _git_commit_stage_2_show_dialog(self, status):
+        if not status.strip():
+            self._update_status("No changes to commit (working tree is clean).", "info")
+            return
+        dialog = GitCommitDialog(self)
+        if dialog.exec():
+            msg = dialog.get_commit_message()
+            if not msg:
+                self._update_status("Commit cancelled: message cannot be empty.", "error")
+                return
+            self._run_command("git_add", on_finish=lambda _: self._git_commit_stage_3_run_commit(msg))
+    def _git_commit_stage_3_run_commit(self, message): self._run_command("git_commit", commit_message=message)
+
+    def _poetry_install(self): self._run_command("poetry_install")
+    def _pdm_sync(self): self._run_command("pdm_sync")
+    def _activate_environment(self): self._run_command("activate")
+    def _launch_jupyter(self): self._run_command("launch", tool="jupyter notebook")
+
+    def _show_file_context_menu(self, pos):
+        item = self.ui.file_list.itemAt(pos)
+        if not item: return
+        path = Path(self.ui.path_input.text().strip()) / item.text()
+        if not path.exists(): return
+        menu = QMenu()
+        open_act = menu.addAction("📂 Open")
+        copy_act = menu.addAction("🔗 Copy Path")
+        del_act = menu.addAction("🗑️ Delete")
+        action = menu.exec(self.ui.file_list.mapToGlobal(pos))
+        if action == open_act:
+            os.startfile(path)
+        elif action == copy_act:
+            QGuiApplication.clipboard().setText(str(path))
+            self._update_status("Path copied to clipboard.", "info")
+        elif action == del_act:
+            if QMessageBox.question(self, 'Confirm Deletion', f"Are you sure you want to delete '{item.text()}'?") == QMessageBox.StandardButton.Yes:
+                try:
+                    if path.is_dir(): shutil.rmtree(path)
+                    else: os.remove(path)
+                    self.discover_resources()
+                except Exception as e:
+                    self._update_status(f"Error deleting file/folder: {e}", "error")
+
+    def _populate_file_list(self, base_path):
+        self.ui.file_list.clear()
+        try:
+            folders = sorted([p.name for p in base_path.iterdir() if p.is_dir()])
+            files = sorted([p.name for p in base_path.iterdir() if p.is_file()])
+            for name in folders + files:
+                item = QListWidgetItem(name)
+                icon_type = QStyle.StandardPixmap.SP_DirIcon if (base_path / name).is_dir() else QStyle.StandardPixmap.SP_FileIcon
+                item.setIcon(self.style().standardIcon(icon_type))
+                self.ui.file_list.addItem(item)
+        except PermissionError:
+            self._update_status("Permission denied to read directory.", "error")
+
+    def _find_and_populate_venvs(self, base_path):
+        self.ui.venv_dropdown.clear()
+        # Find local venvs
+        script_folder = "Scripts" if sys.platform == "win32" else "bin"
+        venvs = [d.name for d in base_path.iterdir() if d.is_dir() and (d / script_folder / "activate").exists()]
+        for venv in sorted(venvs):
+            self.ui.venv_dropdown.addItem(venv)
+            self.ui.venv_dropdown.setItemData(self.ui.venv_dropdown.count() - 1, "venv")
+        # Find conda envs (asynchronously)
+        self._run_command("list_conda_envs", on_finish=self._on_conda_envs_listed)
+
+    def _on_conda_envs_listed(self, output):
+        try:
+            data = json.loads(output)
+            conda_envs = [Path(p).name for p in data.get('envs', [])]
+            existing_items = {self.ui.venv_dropdown.itemText(i) for i in range(self.ui.venv_dropdown.count())}
+            for env in sorted(conda_envs):
+                if env and env not in existing_items:
+                    self.ui.venv_dropdown.addItem(f"{env} (conda)")
+                    self.ui.venv_dropdown.setItemData(self.ui.venv_dropdown.count() - 1, "conda")
+        except json.JSONDecodeError:
+            self._log_message("Could not parse conda envs. Is conda installed and in PATH?")
+        
+        if self.ui.venv_dropdown.count() == 0:
+            self.ui.venv_dropdown.addItem("No environments found")
+            self.ui.venv_dropdown.setEnabled(False)
+        else:
+            self.ui.venv_dropdown.setEnabled(True)
+
+    def _update_file_observer(self, path):
+        if self.observer:
+            self.observer.stop()
+            self.observer.join()
+        if os.path.isdir(path):
+            self.observer = Observer()
+            event_handler = FileChangeHandler()
+            event_handler.file_changed.connect(self.discover_resources)
+            self.observer.schedule(event_handler, str(path), recursive=False)
+            self.observer.start()
+
+    def _update_status(self, message, msg_type):
+        c = self.current_theme
+        colors = {"success": c['success'], "error": c['error'], "info": c['accent']}
+        bg_color = colors.get(msg_type, 'transparent')
+        self.ui.status_label.setText(message)
+        self.ui.status_label.setStyleSheet(f"background-color:{bg_color}; color:white; border-radius:4px; padding:4px; qproperty-alignment: 'AlignCenter';")
+        if msg_type in colors:
+            QTimer.singleShot(5000, lambda: self.ui.status_label.setStyleSheet(f"background:transparent; color:{c['text']};"))
+
+    def _log_message(self, message):
+        self.ui.log_output.append(f"[{time.strftime('%H:%M:%S')}] {message}")
+        self.ui.log_output.verticalScrollBar().setValue(self.ui.log_output.verticalScrollBar().maximum())
+
+    def _set_progress_bar_active(self, active):
+        self.ui.progress_bar.setVisible(active)
+        self.ui.running_indicator.setVisible(active)
+        self.ui.progress_bar.setRange(0, 0 if active else 100)
+
+    def _initiate_close(self): self.close()
+    def closeEvent(self, event):
+        if hasattr(self, '_is_closing') and self._is_closing:
+            super().closeEvent(event)
+            return
+        if self.observer:
+            self.observer.stop()
+            self.observer.join()
+        if self.command_thread and self.command_thread.isRunning():
+            self.command_thread.stop_process()
+            self.command_thread.wait()
+        self._is_closing = True
+        event.ignore()
+        self.fade_out_animation.start()
+
+    def _setup_animations(self):
+        self.fade_in_animation = QPropertyAnimation(self, b"windowOpacity", self); self.fade_in_animation.setDuration(400); self.fade_in_animation.setStartValue(0.0); self.fade_in_animation.setEndValue(1.0)
+        self.fade_out_animation = QPropertyAnimation(self, b"windowOpacity", self); self.fade_out_animation.setDuration(300); self.fade_out_animation.setStartValue(1.0); self.fade_out_animation.setEndValue(0.0)
+        self.fade_out_animation.finished.connect(self.close)
+    def show_with_fade(self):
+        self.setWindowOpacity(0.0)
+        self.show()
+        self.fade_in_animation.start()
+
+    def _create_new_project(self):
+        dialog = NewProjectDialog(self)
+        if dialog.exec():
+            parent_dir, name = dialog.get_details()
+            if not parent_dir or not name:
+                self._update_status("Parent directory and project name are required.", "error"); return
+            path = Path(parent_dir) / name
+            if path.exists():
+                self._update_status(f"Project directory '{name}' already exists.", "error"); return
+            try:
+                self._log_message(f"Creating new project at: {path}")
+                path.mkdir(parents=True)
+                for d in ["data", "notebooks", "scripts", "src"]: (path / d).mkdir()
+                (path / ".gitignore").write_text("# Environments\n.env\n.venv\nenv/\nvenv/\n\n# Python cache\n__pycache__/\n*.py[cod]\n\n# IDEs\n.vscode/\n.idea/\n\n# Other\n.DS_Store")
+                self._update_status(f"Project '{name}' created successfully.", "success")
+                self.ui.path_input.setText(str(path))
+            except Exception as e:
+                self._update_status(f"Failed to create project: {e}", "error")
+
+    def _update_git_status(self):
+        if not (Path(self.ui.path_input.text().strip()) / ".git").is_dir():
+            self.ui.git_groupbox.setVisible(False)
+            return
+        self.ui.git_groupbox.setVisible(True)
+        self.ui.git_status_label.setText("<i>Checking Git status...</i>")
+        self._run_command("git_branch", on_finish=self._on_git_branch_finish)
+    def _on_git_branch_finish(self, branch):
+        self._run_command("git_status", on_finish=lambda status: self._on_git_status_finish(branch.strip(), status))
+    def _on_git_status_finish(self, branch, status):
+        c = self.current_theme
+        if status.strip():
+            text = f"Branch: <b>{branch}</b> <font color='{c['git_dirty']}'> (dirty)</font>"
+            tip = "Working directory has uncommitted changes."
+        else:
+            text = f"Branch: <b>{branch}</b> <font color='{c['git_clean']}'> (clean)</font>"
+            tip = "Working directory is clean."
+        self.ui.git_status_label.setText(text)
+        self.ui.git_status_label.setToolTip(tip)
+
+    def _update_build_tool_visibility(self):
+        self.ui.build_tools_groupbox.setVisible((Path(self.ui.path_input.text().strip()) / "pyproject.toml").exists())
+    
+    # --- Window Movement ---
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton and self.ui.container_layout.itemAt(0).widget().geometry().contains(event.pos()):
+            self.old_pos = event.globalPosition().toPoint()
+    def mouseMoveEvent(self, event):
+        if self.old_pos:
+            self.move(self.pos() + event.globalPosition().toPoint() - self.old_pos)
+            self.old_pos = event.globalPosition().toPoint()
+    def mouseReleaseEvent(self, event):
+        self.old_pos = None
+
 if __name__ == "__main__":
     sys.excepthook = global_exception_hook
     app = QApplication(sys.argv)
