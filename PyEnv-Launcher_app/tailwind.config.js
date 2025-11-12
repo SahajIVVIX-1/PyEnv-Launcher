@@ -8,31 +8,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        'dark-background': '#121212',
-        'dark-primary': '#1e1e1e',
-        'dark-secondary': '#2a2a2a',
-        'dark-border': '#424242',
-        'dark-text': '#ffffff',
-        'dark-text-header': '#e0e0e0',
-        'dark-text-secondary': '#b0b0b0',
-        'dark-accent': '#61affe',
-        'dark-accent-hover': '#7dc0ff',
-        'dark-success': '#66bb6a',
-        'dark-error': '#ef5350',
-        'dark-dirty': '#ffa726',
+        // New Dark Theme Palette (desaturated blues/greys)
+        'dark-bg': '#111827', // Almost black, deep blue
+        'dark-primary': '#1F2937', // Card backgrounds
+        'dark-secondary': '#374151', // Inputs, hover states
+        'dark-border': '#4B5563', // Borders, dividers
+        'dark-text-primary': '#F9FAFB', // Main text
+        'dark-text-secondary': '#D1D5DB', // Softer text
+        'dark-text-header': '#E5E7EB', // Section headers
+        'dark-accent': '#38BDF8', // Bright blue for highlights
+        'dark-accent-hover': '#7DD3FC',
+        'dark-success': '#4ADE80',
+        'dark-error': '#F87171',
+        'dark-dirty': '#FBBF24',
 
-        'light-background': '#f8f9fa',
-        'light-primary': '#ffffff',
-        'light-secondary': '#f0f2f5',
-        'light-border': '#e0e2e6',
-        'light-text': '#343a40',
-        'light-text-header': '#007bff',
-        'light-text-secondary': '#6c757d',
-        'light-accent': '#007bff',
-        'light-accent-hover': '#0069d9',
-        'light-success': '#28a745',
-        'light-error': '#dc3545',
-        'light-dirty': '#ffc107',
+        // Refined Light Theme Palette
+        'light-bg': '#F9FAFB', // Page background
+        'light-primary': '#FFFFFF', // Card backgrounds
+        'light-secondary': '#F3F4F6', // Inputs, hover states
+        'light-border': '#E5E7EB', // Borders, dividers
+        'light-text-primary': '#1F2937', // Main text
+        'light-text-secondary': '#6B7280', // Softer text
+        'light-text-header': '#111827', // Section headers
+        'light-accent': '#0EA5E9', // Vivid blue
+        'light-accent-hover': '#38BDF8',
+        'light-success': '#22C55E',
+        'light-error': '#EF4444',
+        'light-dirty': '#F59E0B',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
@@ -40,6 +42,10 @@ export default {
       },
       transitionProperty: {
         'height': 'height',
+        'max-height': 'max-height',
+      },
+      backdropBlur: {
+        xs: '2px',
       }
     },
   },

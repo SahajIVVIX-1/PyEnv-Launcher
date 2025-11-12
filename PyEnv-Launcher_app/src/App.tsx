@@ -3,7 +3,7 @@ import { Header } from "./components/Header";
 import { LeftPanel } from "./components/LeftPanel";
 import { RightPanel } from "./components/RightPanel";
 import { Footer } from "./components/Footer";
-import { Theme, ProjectData, Venv, GitStatus, FileItem, BuildTools } from "./types";
+import { Theme, ProjectData, Venv } from "./types";
 import * as localApiService from "./services/localApiService";
 import * as geminiService from "./services/geminiService";
 
@@ -100,15 +100,15 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-light-background dark:bg-dark-background text-light-text dark:text-dark-text">
+      <div className="flex items-center justify-center h-screen bg-light-bg dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary">
         Loading PyEnv Launcher...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-4 flex flex-col">
-      <div className="bg-light-primary dark:bg-dark-primary/80 dark:backdrop-blur-sm rounded-xl shadow-2xl flex-grow flex flex-col min-w-[1200px] border border-light-border dark:border-dark-border/50">
+    <div className="min-h-screen p-4 flex flex-col text-light-text-primary dark:text-dark-text-primary">
+      <div className="bg-light-primary dark:bg-dark-primary rounded-xl shadow-2xl flex-grow flex flex-col min-w-[1200px] border border-light-border dark:border-dark-border">
         <Header theme={theme} toggleTheme={toggleTheme} />
         <main className="flex-grow flex p-4 pt-2 gap-6 overflow-hidden">
           <LeftPanel

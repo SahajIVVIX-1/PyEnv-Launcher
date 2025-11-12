@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --transition-speed: 150ms;
+  --transition-speed: 200ms;
 }
 
 /* Custom Scrollbar Styling */
@@ -15,17 +15,17 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #424242; /* dark-border */
+  background: #4B5563; /* dark-border */
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #61affe80; /* dark-accent with opacity */
+  background: #38BDF8; /* dark-accent */
 }
 html.light ::-webkit-scrollbar-thumb {
-    background: #e0e2e6; /* light-border */
+    background: #E5E7EB; /* light-border */
 }
 html.light ::-webkit-scrollbar-thumb:hover {
-    background: #007bff80; /* light-accent with opacity */
+    background: #0EA5E9; /* light-accent */
 }
 
 
@@ -34,12 +34,20 @@ select {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23b0b0b0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>');
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23D1D5DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>');
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 1em;
     padding-right: 2.5rem;
 }
 html.light select {
-     background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>');
+     background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>');
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    transition: opacity var(--transition-speed) ease-in-out;
 }

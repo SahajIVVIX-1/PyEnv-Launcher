@@ -13,15 +13,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseClasses =
-  "inline-flex items-center justify-center rounded-md font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-light-primary dark:focus:ring-offset-dark-primary disabled:opacity-50 disabled:pointer-events-none transform hover:scale-105 active:scale-95";
+  "inline-flex items-center justify-center rounded-md font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-dark-primary disabled:opacity-50 disabled:pointer-events-none transform hover:scale-[1.03] active:scale-[0.98]";
 
 const variantClasses: { [key in ButtonVariant]: string } = {
   primary:
     "bg-light-accent text-white hover:bg-light-accent-hover dark:bg-dark-accent dark:hover:bg-dark-accent-hover focus:ring-light-accent dark:focus:ring-dark-accent",
   secondary:
-    "bg-light-secondary text-light-text border border-light-border hover:bg-light-border dark:bg-dark-secondary dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-border focus:ring-light-accent dark:focus:ring-dark-accent",
+    "bg-light-secondary text-light-text-primary border border-light-border hover:bg-light-border dark:bg-dark-secondary dark:text-dark-text-primary dark:border-dark-border dark:hover:bg-dark-border focus:ring-light-accent dark:focus:ring-dark-accent",
   danger:
-    "bg-light-error text-white hover:bg-opacity-90 dark:bg-dark-error dark:hover:bg-opacity-90 focus:ring-light-error dark:focus:ring-dark-error",
+    "bg-light-secondary text-light-error border border-light-border hover:bg-light-error hover:text-white dark:bg-dark-secondary dark:text-dark-error dark:border-dark-border dark:hover:bg-dark-error dark:hover:text-white focus:ring-light-error dark:focus:ring-dark-error",
   ghost:
     "hover:bg-light-secondary dark:hover:bg-dark-secondary text-light-text-secondary dark:text-dark-text-secondary",
 };

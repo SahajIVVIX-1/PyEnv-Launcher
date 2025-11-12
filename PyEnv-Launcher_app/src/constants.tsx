@@ -43,5 +43,6 @@ export const ICONS: { [key: string]: React.ReactNode } = {
   play: <polygon points="5 3 19 12 5 21 5 3"/>,
   broom: <path d="m9.9 2.1 7.4 7.4c.8.8.8 2 0 2.8l-1.2 1.2a2 2 0 0 1-2.8 0L5.9 6.1a2 2 0 0 1 0-2.8l1.2-1.2c.8-.8 2-.8 2.8 0z" />,
   chevronDown: <path d="m6 9 6 6 6-6" />,
+  chevronRight: <path d="m9 18 6-6-6-6" />,
   sparkles: <><path d="M12 3-2 15h10v5l12-12h-10z"/><path d="m22 3-2 15h10v5l12-12h-10z"/></>,
 };

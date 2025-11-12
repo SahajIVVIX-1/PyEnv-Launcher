@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
   return (
-    <header className="flex items-center justify-between p-3 border-b border-light-border dark:border-dark-border/50">
+    <header className="flex items-center justify-between p-3 border-b border-light-border dark:border-dark-border">
       <div className="flex items-center gap-3">
         <Icon name="pyenvLauncherLogo" className="w-8 h-8 text-light-accent dark:text-dark-accent" />
         <h1 className="text-lg font-bold text-light-text-header dark:text-dark-text-header">PyEnv Launcher</h1>

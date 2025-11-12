@@ -48,9 +48,13 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({ files, currentPath, 
   };
 
   return (
-    <Card title="Directory & Files" icon={<Icon name="folder" className="w-4 h-4" />} className="h-full">
+    <Card
+      title="Directory & Files"
+      icon={<Icon name="folder" className="w-4 h-4 text-light-text-header dark:text-dark-text-header" />}
+      className="h-full"
+    >
       <div className="flex flex-col h-full">
-        <div className="flex gap-2 mb-2">
+        <div className="flex gap-2 mb-3">
           <Button size="sm" icon="fileMedical" onClick={handleNewFile}>
             New File
           </Button>
@@ -64,14 +68,18 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({ files, currentPath, 
             Delete
           </Button>
         </div>
-        <div className="flex-grow border border-light-border dark:border-dark-border rounded-md overflow-y-auto p-1 bg-light-secondary dark:bg-dark-secondary">
+        <div className="flex-grow border border-light-border dark:border-dark-border rounded-md overflow-y-auto p-1 bg-light-secondary dark:bg-dark-secondary/50">
           <ul>
             {files.map((file) => (
               <li
                 key={file.name}
                 onClick={() => setSelectedFile(file.name)}
                 className={`flex items-center gap-2 p-1.5 hover:bg-light-border dark:hover:bg-dark-border rounded-md cursor-pointer text-sm transition-colors duration-100
-                                    ${selectedFile === file.name ? "bg-light-accent/20 dark:bg-dark-accent/20" : ""}
+                                    ${
+                                      selectedFile === file.name
+                                        ? "bg-light-accent/20 dark:bg-dark-accent/20 text-light-accent dark:text-dark-accent"
+                                        : ""
+                                    }
                                 `}
               >
                 {getFileIcon(file)}
