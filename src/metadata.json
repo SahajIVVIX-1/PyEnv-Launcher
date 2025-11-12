@@ -1,0 +1,5 @@
+{
+  "name": "PyEnv Launcher",
+  "description": "A web-based interface for managing Python projects, virtual environments, and Git repositories, inspired by a desktop application. It includes features for file exploration, package management, and AI-powered commit message suggestions using the Gemini API.",
+  "requestFramePermissions": []
+}
